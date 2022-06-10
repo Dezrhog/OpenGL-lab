@@ -13,6 +13,7 @@ namespace ComputerGraphics
     public class Shader
     {
         public readonly int Handle;
+        private bool disposedValue = false;
 
         private readonly Dictionary<string, int> _uniformLocations;
 
@@ -113,7 +114,28 @@ namespace ComputerGraphics
             GL.UseProgram(Handle);
         }
 
+        //Следующие три блока предназначены для удаления сохранённой программы из памяти
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                GL.DeleteProgram(Handle);
+                disposedValue = true;
+            }
+        }
 
+        ~Shader()
+        {
+            GL.DeleteProgram(Handle);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        //Возвращает значение атрибута шейдера по имени атрибута
         public int GetAttribLocation(string attribName)
         {
             return GL.GetAttribLocation(Handle, attribName);

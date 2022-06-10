@@ -19,13 +19,13 @@ namespace ComputerGraphics
         public Camera(Vector3 position, float aspectRation)
         {
             Position = position;
-            AspectRation = aspectRation;
+            AspectRatio = aspectRation;
         }
 
         //Позиция камеры
         public Vector3 Position { get; set; }
         //Соотношение сторон viewport
-        public float AspectRation { get; set; }
+        public float AspectRatio { get; set; }
 
         public Vector3 Front => _front;
         public Vector3 Up => _up;
@@ -89,7 +89,7 @@ namespace ComputerGraphics
         //Возвращает проекцию матрицы используя метод, похожий на используемый выше
         public Matrix4 GetProjectionMatrix()
         {
-            return Matrix4.CreatePerspectiveFieldOfView(_fov, AspectRation, 0.01f, 100f);
+            return Matrix4.CreatePerspectiveFieldOfView(_fov, AspectRatio, 0.01f, 100f);
         }
 
         //Этот метод обновляет направление векторов
