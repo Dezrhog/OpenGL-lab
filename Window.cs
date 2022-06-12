@@ -9,36 +9,95 @@ namespace ComputerGraphics
 {
     public class Window : GameWindow
     {
-        //Вершины фигуры
-        private readonly float[] _vertices =
+        //Вершины пирамиды
+        private readonly float[] _pyramidVertices =
         {
-             0.5f,  0.5f, 0.0f, 
-             0.5f, -0.5f, 0.0f,
-            -0.5f, -0.5f, 0.0f,
-            -0.5f,  0.5f, 0.0f
+        //    X      Y      Z
+             0.0f,  0.5f, -0.5f,
+            -0.5f, -0.5f,  0.0f, // Передняя сторона
+             0.5f, -0.5f,  0.0f, 
+
+             0.0f,  0.5f, -0.5f,
+            -0.5f, -0.5f,  0.0f, // Левая сторона
+            -0.5f, -0.5f, -1.0f,
+
+             0.0f,  0.5f, -0.5f,
+            -0.5f, -0.5f, -1.0f, // Задняя сторона
+             0.5f, -0.5f, -1.0f,
+
+             0.0f,  0.5f, -0.5f,
+             0.5f, -0.5f, -1.0f, // Правая сторона
+             0.5f, -0.5f,  0.0f,
+
+        //       Основание
+            -0.5f, -0.5f,  0.0f,
+             0.5f, -0.5f,  0.0f, // Первый полигон основания
+            -0.5f, -0.5f, -1.0f,
+             0.5f, -0.5f, -1.0f,
+            -0.5f, -0.5f, -1.0f, // Второй полигон основания
+             0.5f, -0.5f,  0.0f
+        };
+
+        //Вершины куба
+        private readonly float[] _cubeVertices =
+        {
+        //  Вершины нижней грани
+            -0.5f, -0.5f,  0.0f, // [0] Передняя левая
+             0.5f, -0.5f,  0.0f, // [1] Передняя правая
+            -0.5f, -0.5f, -1.0f, // [2] Задняя левая
+             0.5f, -0.5f, -1.0f, // [3] Задняя правая
+
+        //  Вершины верхней грани
+            -0.5f,  0.5f,  0.0f, // [4] Передняя левая
+             0.5f,  0.5f,  0.0f, // [5] Передняя правая
+            -0.5f,  0.5f, -1.0f, // [6] Задняя левая
+             0.5f,  0.5f, -1.0f  // [7] Задняя правая
         };
 
         /**
          * Данная переменная представляет собой
-         * как бы массив указателей на вершины 
-         * полигонов (треугольников) фигуры.
+         * как бы массив указателей на вершины,
+         * составляющие рёбра куба
          * 
-         * Он необходим для того, чтобы иметь возможность
-         * переиспользовать вершины.
+         * Этот массив будет использоваться
+         * для заполнения Element Buffer Array
+         * для модели куба
          */
-        private readonly uint[] _indices =
+        private readonly uint[] _cubeEdges =
         {
-            0, 1, 3,
-            1, 2, 3
+            0, 1,
+            0, 2,
+            0, 4,
+
+            3, 2,
+            3, 1,
+            3, 7,
+
+            5, 6,
+            5, 4,
+            5, 1,
+
+            6, 7,
+            6, 4,
+            6, 2
         };
 
-        //Хендлеры объектов
-        private int _vertexBufferObject;
-        private int _vertexArrayObject;
-        private int _elementBufferObject;
+        //Хендлеры VBO моделей
+        private int _vboPyramid;
+        private int _vboCube;
 
-        //Определяем шейдер и камеру
-        private Shader _shader;
+        //Хендлеры VAO моделей
+        private int _vaoPyramid;
+        private int _vaoCube;
+
+        //Хендлер EBO куба
+        private int _eboCube;
+
+        //Шейдеры моделей
+        private Shader _pyramidShader;
+        private Shader _cubeShader;
+
+        //Камера
         private Camera _camera;
 
         //Вспомогательные переменные для камеры и вращения фигуры
@@ -57,41 +116,60 @@ namespace ComputerGraphics
         {
             base.OnLoad();
 
-            //Очищаем бекграунд сцены и заполняем его серым цветом
+            //Очищение бекграунда сцены и заполнение его серым цветом
             GL.ClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 
+            /**
+             * Включение данной функции
+             * позволяет избежать наслоения
+             * расположенных сзади полигонов
+             * на расположенные спереди.
+             * 
+             * То есть фактически включается
+             * глубина изображения.
+             */
             GL.Enable(EnableCap.DepthTest);
 
-            _shader = new Shader("../../../Shaders/shader.vert", "../../../Shaders/shader.frag");
+            //Инициализация шейдеров
+            _pyramidShader = new Shader("../../../Shaders/shader.vert", "../../../Shaders/shader.frag");
+            _cubeShader = new Shader("../../../Shaders/cubeShader.vert", "../../../Shaders/shader.frag");
 
-            _shader.Use();
+            {
+                //Создаётся Vertex Buffer Object для пирамиды
+                _vboPyramid = GL.GenBuffer();
+                //Привязывается буфер
+                GL.BindBuffer(BufferTarget.ArrayBuffer, _vboPyramid);
+                //В буфер загружаются вершины пирамиды
+                GL.BufferData(BufferTarget.ArrayBuffer, _pyramidVertices.Length * sizeof(float), _pyramidVertices, BufferUsageHint.StaticDraw);
 
-            _vertexArrayObject = GL.GenVertexArray();
-            GL.BindVertexArray(_vertexArrayObject);
+                //Создается и привязывается Vertex Array Object для пирамиды
+                _vaoPyramid = GL.GenVertexArray();
+                GL.BindVertexArray(_vaoPyramid);
 
-            //Создаем пустой хендлер для вертексного буффера
-            _vertexBufferObject = GL.GenBuffer();
-            //Привязываем буфер
-            GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-            //Загружаем в буфер вершины фигуры
-            GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
+                //Определяется интерпритация вершин пирамиды для буфера
+                var vertexLocation = _pyramidShader.GetAttribLocation("aPosition");
+                GL.VertexAttribPointer(vertexLocation, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
 
-            //Создаём хендлер для вертексного массива
-            _vertexArrayObject = GL.GenVertexArray();
-            GL.BindVertexArray(_vertexArrayObject);
+                //Включается атрибут вершин пирамиды
+                GL.EnableVertexAttribArray(vertexLocation);
+            }
 
-            //Определяем интерпритацию данных вершин для буфера
-            GL.VertexAttribPointer(_shader.GetAttribLocation("aPosition"), 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            {
+                _vboCube = GL.GenBuffer();
+                GL.BindBuffer(BufferTarget.ArrayBuffer, _vboCube);
+                GL.BufferData(BufferTarget.ArrayBuffer, _cubeVertices.Length * sizeof(float), _cubeVertices, BufferUsageHint.StaticDraw);
 
-            //Включаем атрибут вершины 0
-            GL.EnableVertexAttribArray(0);
+                _vaoCube = GL.GenVertexArray();
+                GL.BindVertexArray(_vaoCube);
 
+                var vertexLocation = _cubeShader.GetAttribLocation("aPosition");
+                GL.VertexAttribPointer(vertexLocation, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
 
-            //Создаём элементный буффер, привязываем его, и заполняем его данными
-            _elementBufferObject = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, _elementBufferObject);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, _indices.Length * sizeof(uint), _indices, BufferUsageHint.StaticDraw);
-
+                //Создаётся Element Buffer Object, привязывается, и заполняется данными
+                _eboCube = GL.GenBuffer();
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, _eboCube);
+                GL.BufferData(BufferTarget.ElementArrayBuffer, _cubeEdges.Length * sizeof(uint), _cubeEdges, BufferUsageHint.StaticDraw);
+            }
             _camera = new Camera(Vector3.UnitZ * 3, Size.X / (float)Size.Y);
 
             CursorGrabbed = true;
@@ -105,17 +183,22 @@ namespace ComputerGraphics
 
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            _shader.Use();
+            _pyramidShader.Use();
 
-            var model = Matrix4.Identity * Matrix4.CreateRotationX((float)MathHelper.DegreesToRadians(_time));
-            _shader.SetMatrix4("model", model);
-            _shader.SetMatrix4("view", _camera.GetViewMatrix());
-            _shader.SetMatrix4("projection", _camera.GetProjectionMatrix());
+            var model = Matrix4.Identity * Matrix4.CreateRotationX((float)MathHelper.DegreesToRadians(1));//_time));
+            _pyramidShader.SetMatrix4("model", model);
+            _pyramidShader.SetMatrix4("view", _camera.GetViewMatrix());
+            _pyramidShader.SetMatrix4("projection", _camera.GetProjectionMatrix());
 
-            GL.BindVertexArray(_vertexArrayObject);
+            GL.BindVertexArray(_vaoPyramid);
+            //GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
+            GL.DrawArrays(PrimitiveType.Triangles, 0, _pyramidVertices.Length / 3);
 
-            GL.DrawElements(PrimitiveType.Triangles, _indices.Length, DrawElementsType.UnsignedInt, 0);
-
+            _cubeShader.Use();
+            GL.BindVertexArray(_vaoCube);
+            //GL.LineWidth(2.0f);
+            GL.DrawElements(PrimitiveType.Lines, _cubeEdges.Length, DrawElementsType.UnsignedInt, 0);
+            
             SwapBuffers();
         }
 
@@ -201,13 +284,13 @@ namespace ComputerGraphics
             GL.BindVertexArray(0);
             GL.UseProgram(0);
 
-            int[] buffers = { _vertexBufferObject, _vertexArrayObject };
+            int[] buffers = { _vboPyramid, _vaoPyramid };
 
             GL.DeleteBuffers(2, buffers);
 
-            GL.DeleteProgram(_shader.Handle);
+            GL.DeleteProgram(_pyramidShader.Handle);
 
-            _shader.Dispose();
+            _pyramidShader.Dispose();
 
             base.OnUnload();
         }
