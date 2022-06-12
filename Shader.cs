@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using OpenTK.Graphics.OpenGL4;
+﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
 /**
@@ -56,8 +53,11 @@ namespace ComputerGraphics
             //Далее создаётся кэш для формы шейдера
             GL.GetProgram(Handle, GetProgramParameterName.ActiveUniforms, out var numberOfUniforms);
 
+            //Инициализируется словарь униформ шейдеров программы
             _uniformLocations = new Dictionary<string, int>();
 
+            //Так как униформы являются уникальными для всех шейдеров
+            //нет необходимости доставать их из каждого шейдера отдельно
             for (var i = 0; i < numberOfUniforms; i++)
             {
                 var key = GL.GetActiveUniform(Handle, i, out _, out _);
@@ -141,28 +141,14 @@ namespace ComputerGraphics
             return GL.GetAttribLocation(Handle, attribName);
         }
 
-        public void SetInt(string name, int data)
-        {
-            GL.UseProgram(Handle);
-            GL.Uniform1(_uniformLocations[name], data);
-        }
-
-        public void SetFloat(string name, float data)
-        {
-            GL.UseProgram(Handle);
-            GL.Uniform1(_uniformLocations[name], data);
-        }
-
+        /**
+         * Следующие четыре метода устанавливают 
+         * униформам значения типа Matrix4
+         */
         public void SetMatrix4(string name, Matrix4 data)
         {
             GL.UseProgram(Handle);
             GL.UniformMatrix4(_uniformLocations[name], true, ref data);
-        }
-
-        public void SetVector3(string name, Vector3 data)
-        {
-            GL.UseProgram(Handle);
-            GL.Uniform3(_uniformLocations[name], data);
         }
     }
 }

@@ -9,9 +9,9 @@ namespace ComputerGraphics
         private Vector3 _up = Vector3.UnitY;
         private Vector3 _right = Vector3.UnitX;
 
-        //Вращение вокруг оси Х (радианы)
-        private float _pitch;
         //Вращение вокруг оси Y (радианы)
+        private float _pitch;
+        //Вращение вокруг оси X (радианы)
         private float _yaw = -MathHelper.PiOver2;
         //Поле зрения камера (радианы)
         private float _fov = MathHelper.PiOver2;
