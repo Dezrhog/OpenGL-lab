@@ -5,6 +5,10 @@ using OpenTK.Windowing.Desktop;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
+/**
+ * Created by AlekseevDA on 10.06.2022
+ * Класс, выполняющий работу по отрисовке сцены
+ */
 namespace ComputerGraphics
 {
     public class Window : GameWindow

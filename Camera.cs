@@ -1,5 +1,10 @@
 ﻿using OpenTK.Mathematics;
 
+/**
+ * Created by AlekseevDA on 10.06.2022
+ * Класс, высчитывающий матрицы проекции и обзора камеры,
+ * для последующего использования её в шейдерах
+ */
 namespace ComputerGraphics
 {
     public class Camera

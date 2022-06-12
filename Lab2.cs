@@ -1,6 +1,11 @@
 ﻿using OpenTK.Windowing.Desktop;
 using OpenTK.Mathematics;
 
+/**
+ * Created by AlekseevDA on 10.06.2022
+ * Класс, предназначенный для инициализации и запуска
+ * окна приложения
+ */
 namespace ComputerGraphics
 {
     public static class Lab2
